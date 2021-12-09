@@ -5,6 +5,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>entry</AssemblyName>
     <Nullable>enable</Nullable>
+    <UserSecretsId>9c48ba0c-781b-4381-9fb5-78c3f2ce4edf</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -21,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Documents\UmweltFaculties\Umwelt.Faculty.FacultyBase\Umwelt.Faculty.FacultyBase\Umwelt.Faculty.FacultyBase.csproj" />
-    <ProjectReference Include="..\..\Umwelt.Faculty.FacultyBase\Umwelt.Faculty.FacultyBase\Umwelt.Faculty.FacultyBase.csproj" />
   </ItemGroup>
 
   <ItemGroup>

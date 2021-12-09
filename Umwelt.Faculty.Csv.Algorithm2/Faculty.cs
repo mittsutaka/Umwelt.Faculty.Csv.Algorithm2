@@ -7,6 +7,7 @@ namespace Umwelt.Faculty.Csv.Algorithm2
     {
         private readonly string _inputPath;
         private readonly string _outputPath;
+        private readonly string[] _targetColumns;
 
         public Faculty(IConfiguration configuration)
         {
