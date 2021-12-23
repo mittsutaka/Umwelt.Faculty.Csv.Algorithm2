@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Umwelt.Faculty.Csv.Algorithm2.Models;
 
 namespace Umwelt.Faculty.Csv.Algorithm2
 {
@@ -7,18 +11,92 @@ namespace Umwelt.Faculty.Csv.Algorithm2
     {
         private readonly string _inputPath;
         private readonly string _outputPath;
-        private readonly string[] _targetColumns;
+        private readonly List<string> _sortColumnNames;
+        private readonly List<string> _targetColumnNames;
+        private readonly List<string> _resultColumnNames;
+        private List<string> _headerNames;
+        private readonly string DATE_HEADER_NAME = "date";
+        private readonly List<string> _suffixes;
 
         public Faculty(IConfiguration configuration)
         {
             (_inputPath, _outputPath) = Initializer.InFileOutFile(configuration);
             var incar = configuration.GetSection("INCAR");
-            // ここで設定を読み取ります。
+
+            _sortColumnNames = incar["SortColumns"].Split(',').ToList();
+            _targetColumnNames = incar["TargetColumns"].Split(',').ToList();
+            _suffixes = new List<string>
+            {
+                "Sum",
+                "Ave",
+                "σ"
+            };
+
+            _resultColumnNames = new List<string>();
+
+            foreach (var t in _targetColumnNames)
+            {
+                foreach (var s in _suffixes)
+                {
+                    _resultColumnNames.Add($"{t}-{s}");
+                }
+            }
+
+            _headerNames = _sortColumnNames.Concat(_resultColumnNames).ToList();
+
         }
 
         public async Task ExecuteAsync()
         {
-            // ここにアルゴリズムの処理を書きます。
+            using var reader = Csv.OpenRead(_inputPath);
+            using var writer = Csv.Create(_outputPath);
+            reader.Read();
+            reader.ReadHeader();
+            var records = new List<Record>();
+            while (reader.Read())
+            {
+                var record = reader.GetRecord(DATE_HEADER_NAME, _sortColumnNames, new[] { "count" });
+                if (record is null) continue;
+                records.Add(record);
+            }
+
+            //集計
+            var groups = records.GroupBy(t => new { col1 = t.Keys[0], col2 = t.Keys[1] }).ToList();
+
+            var outputRecords = (from g in groups
+                                 orderby g.Key.col1, g.Key.col2
+                                 let ave1 = Math.Round(g.Average(r => decimal.Parse(r.Fields[3].ToString())), 2)
+                                 let ave2 = Math.Round(g.Average(r => decimal.Parse(r.Fields[4].ToString())), 2)
+                                 let std1 = calculateStd(g,ave1,3)
+                                 let std2 = calculateStd(g,ave2,4)
+                                 select new
+                                 {
+                                     col1 = g.Key.col1,
+                                     col2 = g.Key.col2,
+                                     countSum = g.Sum(r => decimal.Parse(r.Fields[3].ToString())),
+                                     countAve = ave1,
+                                     countStd = std1,
+                                     priceSum = g.Sum(r => decimal.Parse(r.Fields[4].ToString())),
+                                     priceAve = ave2,
+                                     priceStd = std2,
+                                 }).ToList();
+
+            //平均
+            writer.WriteFields(_headerNames);
+            writer.NextRecord();
+
+            foreach (var record in outputRecords)
+            {
+                writer.WriteRecord(record);
+                writer.NextRecord();
+            }
+        }
+
+        private double calculateStd(IEnumerable<Record> g,decimal ave,int index)
+        {
+            var count = g.Count();
+            var sum = g.Sum(r => Math.Abs(decimal.Parse(r.Fields[index].ToString()) - ave));
+            return Math.Sqrt((double)sum / count);
         }
     }
 }
