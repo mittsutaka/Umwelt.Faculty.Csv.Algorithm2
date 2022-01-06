@@ -75,8 +75,6 @@ namespace Umwelt.Faculty.Csv.Algorithm2
                                  select new
                                  {
                                      cols = g.Key,
-                                     col1 = g.Key[0],
-                                     col2 = g.Key[1],
                                      averages = averages,
                                      standards = standards,
                                      sums = sums
