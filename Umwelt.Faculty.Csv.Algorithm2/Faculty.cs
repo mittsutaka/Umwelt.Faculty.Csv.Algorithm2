@@ -83,7 +83,7 @@ namespace Umwelt.Faculty.Csv.Algorithm2
                                      priceStd = std2,
                                  }).ToList();
 
-            //平均
+            //出力
             writer.WriteFields(_headerNames);
             writer.NextRecord();
 
