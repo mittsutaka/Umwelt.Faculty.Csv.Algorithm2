@@ -14,6 +14,7 @@ namespace Umwelt.Faculty.Csv.Algorithm2
         private readonly string _outputPath;
         private readonly List<string> _sortColumnNames;
         private readonly List<string> _targetColumnNames;
+        private readonly int _targetCount;
         private readonly List<string> _resultColumnNames;
         private List<string> _headerNames;
         private readonly string DATE_HEADER_NAME = "date";
@@ -26,6 +27,7 @@ namespace Umwelt.Faculty.Csv.Algorithm2
 
             _sortColumnNames = incar["SortColumns"].Split(',').ToList();
             _targetColumnNames = incar["TargetColumns"].Split(',').ToList();
+            _targetCount = _targetColumnNames.Count;
             _suffixes = new List<string>
             {
                 "Sum",
@@ -64,23 +66,20 @@ namespace Umwelt.Faculty.Csv.Algorithm2
             //集計
             var groups = records.GroupBy(t => t.Keys, StringArrayEqualityComparer.Default).ToList();
             var fieldsLength = records.First().Fields.Length;
-
+            var start = fieldsLength - _targetCount;
             var outputRecords = (from g in groups
                                  orderby g.Key[0], g.Key[1]
-                                 let ave1 = CalculateAve(g, 3)
-                                 let ave2 = CalculateAve(g, 4)
-                                 let std1 = CalculateStd(g, ave1, 3)
-                                 let std2 = CalculateStd(g, ave2, 4)
+                                 let averages = Enumerable.Range(start, _targetCount).Select(t => CalculateAve(g, t)).ToArray()
+                                 let standards = Enumerable.Range(start, _targetCount).Select(t => CalculateStd(g, averages[t - start], t)).ToArray()
+                                 let sums = Enumerable.Range(start, _targetCount).Select(t => CalculateSum(g, t)).ToArray()
                                  select new
                                  {
+                                     cols = g.Key,
                                      col1 = g.Key[0],
                                      col2 = g.Key[1],
-                                     countSum = CaclulateSum(g, 3),
-                                     countAve = ave1,
-                                     countStd = std1,
-                                     priceSum = CaclulateSum(g, 4),
-                                     priceAve = ave2,
-                                     priceStd = std2,
+                                     averages = averages,
+                                     standards = standards,
+                                     sums = sums
                                  }).ToList();
 
             //出力
@@ -89,7 +88,16 @@ namespace Umwelt.Faculty.Csv.Algorithm2
 
             foreach (var record in outputRecords)
             {
-                writer.WriteRecord(record);
+                for (int i = 0; i < _targetCount; i++)
+                {
+                    writer.WriteField(record.cols[i]);
+                }
+                for (int i = 0; i < _targetCount; i++)
+                {
+                    writer.WriteField(record.sums[i]);
+                    writer.WriteField(record.averages[i]);
+                    writer.WriteField(record.standards[i]);
+                }
                 writer.NextRecord();
             }
         }
@@ -106,7 +114,7 @@ namespace Umwelt.Faculty.Csv.Algorithm2
             return Math.Round(group.Average(r => decimal.Parse(r.Fields[index].ToString())), 2);
         }
 
-        private decimal CaclulateSum(IGrouping<string[], Record> group, int index)
+        private decimal CalculateSum(IGrouping<string[], Record> group, int index)
         {
             return group.Sum(r => decimal.Parse(r.Fields[index].ToString()));
         }
