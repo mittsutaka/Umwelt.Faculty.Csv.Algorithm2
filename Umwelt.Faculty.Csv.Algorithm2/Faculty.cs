@@ -68,7 +68,6 @@ namespace Umwelt.Faculty.Csv.Algorithm2
             var fieldsLength = records.First().Fields.Length;
             var start = fieldsLength - _targetCount;
             var outputRecords = (from g in groups
-                                 orderby g.Key[0], g.Key[1]
                                  let averages = Enumerable.Range(start, _targetCount).Select(t => CalculateAve(g, t)).ToArray()
                                  let standards = Enumerable.Range(start, _targetCount).Select(t => CalculateStd(g, averages[t - start], t)).ToArray()
                                  let sums = Enumerable.Range(start, _targetCount).Select(t => CalculateSum(g, t)).ToArray()
@@ -79,6 +78,12 @@ namespace Umwelt.Faculty.Csv.Algorithm2
                                      standards = standards,
                                      sums = sums
                                  }).ToList();
+
+            //ソート
+            for (var i = _sortColumnNames.Count - 1; i >= 0; i--)
+            {
+                outputRecords = outputRecords.OrderBy(t => t.cols[i]).ToList();
+            }
 
             //出力
             writer.WriteFields(_headerNames);
