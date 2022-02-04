@@ -54,6 +54,7 @@ namespace Umwelt.Faculty.Csv.Algorithm2
             //コメントコメント
 
             //original2
+            //original2-2
             using var reader = Csv.OpenRead(_inputPath);
             using var writer = Csv.Create(_outputPath);
             reader.Read();
