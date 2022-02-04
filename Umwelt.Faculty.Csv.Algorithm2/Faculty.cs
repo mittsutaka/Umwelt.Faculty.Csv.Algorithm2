@@ -52,6 +52,9 @@ namespace Umwelt.Faculty.Csv.Algorithm2
         public async Task ExecuteAsync()
         {
             //コメントコメント
+
+            //original2
+            //original2-2
             using var reader = Csv.OpenRead(_inputPath);
             using var writer = Csv.Create(_outputPath);
             reader.Read();
