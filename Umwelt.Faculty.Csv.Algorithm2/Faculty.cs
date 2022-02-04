@@ -51,11 +51,13 @@ namespace Umwelt.Faculty.Csv.Algorithm2
 
         public async Task ExecuteAsync()
         {
+            //コメントコメント
             using var reader = Csv.OpenRead(_inputPath);
             using var writer = Csv.Create(_outputPath);
             reader.Read();
             reader.ReadHeader();
             var records = new List<Record>();
+
             while (reader.Read())
             {
                 var record = reader.GetRecord(DATE_HEADER_NAME, _sortColumnNames, new[] { "count" });
